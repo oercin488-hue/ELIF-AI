@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ELİF AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#09090c;color:white;font-family:Arial,sans-serif}
+.app{max-width:800px;height:100dvh;margin:auto;display:flex;flex-direction:column;padding:18px}
+header{display:flex;align-items:center;gap:14px;padding:12px 0 20px;border-bottom:1px solid #303038}
+.logo{width:55px;height:55px;border-radius:17px;background:linear-gradient(135deg,#ff5962,#8d101b);display:grid;place-items:center;font-size:28px;font-weight:bold}
+.brand{font-size:24px;font-weight:bold;letter-spacing:2px}
+.sub{color:#aaa;font-size:12px;letter-spacing:2px;margin-top:5px}
+.status{margin-left:auto;color:#78db91;font-size:12px}
+#chat{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:15px;padding:22px 0}
+.welcome{text-align:center;margin:auto 0}
+.welcome h2{font-size:27px}
+.welcome p{color:#aaa}
+.message{padding:14px 17px;border-radius:18px;max-width:88%;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.user{align-self:flex-end;background:#81232b}
+.bot{align-self:flex-start;background:#202026;border:1px solid #34343b}
+.error{color:#ff8585}
+form{display:flex;gap:10px;padding:10px;border:1px solid #444;border-radius:20px;background:#19191f}
+input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:16px;padding:12px}
+button{background:#dc343d;border:0;color:white;border-radius:14px;padding:0 19px;font-size:22px}
+footer{text-align:center;color:#777;font-size:12px;padding:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="logo">E</div>
+<div>
+<div class="brand">ELİF AI</div>
+<div class="sub">YAPAY ZEKÂ ASİSTANI</div>
+</div>
+<div class="status">● ONLINE</div>
+</header>
+
+<main id="chat">
+<div class="welcome" id="welcome">
+<h2>Merhaba, ben ELİF AI ❤️</h2>
+<p>Bugün sana nasıl yardımcı olabilirim?</p>
+</div>
+</main>
+
+<form id="form">
+<input id="message" placeholder="Mesajını yaz..." autocomplete="off">
+<button type="submit">➤</button>
+</form>
+<footer>ELİF AI • Yapay zekâ destekli sohbet</footer>
+</div>
+
+<script>
+const chat=document.getElementById("chat");
+const form=document.getElementById("form");
+const input=document.getElementById("message");
+let messages=[];
+
+function addMessage(text,type){
+ const el=document.createElement("div");
+ el.className="message "+type;
+ el.textContent=text;
+ chat.appendChild(el);
+ chat.scrollTop=chat.scrollHeight;
+}
+
+form.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const text=input.value.trim();
+ if(!text)return;
+
+ document.getElementById("welcome")?.remove();
+ addMessage(text,"user");
+ input.value="";
+ messages.push({role:"user",content:text});
+
+ const loading=document.createElement("div");
+ loading.className="message bot";
+ loading.textContent="ELİF AI düşünüyor...";
+ chat.appendChild(loading);
+ chat.scrollTop=chat.scrollHeight;
+
+ try{
+  const response=await fetch("/api/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({messages})
+  });
+
+  const data=await response.json();
+  loading.remove();
+
+  if(!response.ok)throw new Error(data.error||"Bağlantı hatası");
+
+  const answer=data.reply;
+  addMessage(answer,"bot");
+  messages.push({role:"assistant",content:answer});
+
+ }catch(error){
+  loading.remove();
+  addMessage("Bağlantı hatası: "+error.message,"bot error");
+ }
+});
+</script>
+</body>
+</html>
